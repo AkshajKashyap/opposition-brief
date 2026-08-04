@@ -1,0 +1,17 @@
+.venv/
+pycache/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.env
+
+data/raw/*
+!data/raw/.gitkeep
+
+data/processed/*
+!data/processed/.gitkeep
+
+reports/generated/*
+!reports/generated/.gitkeep
