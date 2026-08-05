@@ -1,0 +1,5 @@
+[
+  {"match_id": 101, "match_date": "2024-01-01", "competition": {"name": "Fixture League"}, "season": {"name": "2024"}, "home_team": {"name": "Meridian FC"}, "away_team": {"name": "Northside"}},
+  {"match_id": 102, "match_date": "2024-01-08", "competition": {"name": "Fixture League"}, "season": {"name": "2024"}, "home_team": {"name": "Eastfield"}, "away_team": {"name": "Meridian FC"}},
+  {"match_id": 103, "match_date": "2024-01-15", "competition": {"name": "Fixture League"}, "season": {"name": "2024"}, "home_team": {"name": "Meridian FC"}, "away_team": {"name": "Riverside"}}
+]

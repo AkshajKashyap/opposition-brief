@@ -9,16 +9,19 @@ description = "Evidence-linked soccer opposition analysis and match-preparation 
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-"pandas",
-"plotly",
-"streamlit",
+    "pandas",
+    "plotly",
+    "streamlit",
 ]
 
 [project.optional-dependencies]
 dev = [
-"pytest",
-"ruff",
+    "pytest",
+    "ruff",
 ]
+
+[project.scripts]
+opposition-brief = "opposition_brief.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
