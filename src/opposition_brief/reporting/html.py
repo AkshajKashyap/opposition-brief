@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from html import escape
 from pathlib import Path
 
 from opposition_brief.analysis.metrics import AnalysisResult, event_evidence
 from opposition_brief.models import MatchMetadata, ValidationWarning
+from opposition_brief.observations import CandidateObservation, build_candidate_observations
 
 
 def _table(
@@ -27,70 +27,21 @@ def _table(
     return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
 
 
-def _candidate_observations(result: AnalysisResult) -> list[tuple[str, list[dict[str, object]]]]:
-    observations: list[tuple[str, list[dict[str, object]]]] = []
-    if result.progressions:
-        channel, count = Counter(
-            ("Unknown" if event.start_y is None else _channel(event.start_y))
-            for event in result.progressions
-        ).most_common(1)[0]
-        observations.append(
-            (
-                (
-                    f"Computed fact: {count} completed progressive actions began in the {channel.lower()} channel. "
-                    f"Candidate interpretation: review whether {channel.lower()} progression is a recurring route."
-                ),
-                [
-                    event_evidence(event)
-                    for event in result.progressions
-                    if _channel(event.start_y) == channel
-                ][:5],
-            )
+def _candidate_observations(
+    result: AnalysisResult, selected_match_count: int
+) -> list[tuple[CandidateObservation, list[dict[str, object]]]]:
+    events = {event.source_event_id: event for event in result.progressions + result.losses}
+    return [
+        (
+            observation,
+            [
+                event_evidence(events[event_id])
+                for event_id in observation.supporting_event_ids
+                if event_id in events
+            ][:5],
         )
-    if result.player_involvement:
-        leader = result.player_involvement[0]
-        qualifier = " (small sample: fewer than 3 attempts)" if leader["small_sample"] else ""
-        observations.append(
-            (
-                (
-                    f"Computed fact: {leader['player']} completed {leader['completed']} of {leader['attempted']} progressive attempts"
-                    f" ({leader['completion_rate']}%). Candidate interpretation: review this player's involvement in build-up{qualifier}."
-                ),
-                [
-                    event_evidence(event)
-                    for event in result.progressions
-                    if (event.player or "Unknown player") == leader["player"]
-                ][:5],
-            )
-        )
-    if result.losses:
-        zone, count = Counter(_loss_zone_label(event) for event in result.losses).most_common(1)[0]
-        observations.append(
-            (
-                (
-                    f"Computed fact: {count} event-defined possession losses occurred in {zone}. "
-                    "Candidate interpretation: review those sequences for repeatable pressure cues."
-                ),
-                [
-                    event_evidence(event)
-                    for event in result.losses
-                    if _loss_zone_label(event) == zone
-                ][:5],
-            )
-        )
-    return observations[:3]
-
-
-def _channel(y: float | None) -> str:
-    if y is None:
-        return "Unknown"
-    return "Left" if y < 100 / 3 else "Central" if y < 200 / 3 else "Right"
-
-
-def _loss_zone_label(event: object) -> str:
-    from opposition_brief.analysis.metrics import loss_zone
-
-    return loss_zone(event) or "Unknown"  # type: ignore[arg-type]
+        for observation in build_candidate_observations(result, selected_match_count)
+    ]
 
 
 def render_report(
@@ -119,10 +70,12 @@ def render_report(
         }
         for row in result.player_involvement
     ]
-    observations = _candidate_observations(result)
+    observations = _candidate_observations(result, len(matches))
     observation_html = (
         "".join(
-            f'<article class="observation"><p>{escape(text)}</p>'
+            f'<article class="observation"><h3>{escape(observation.title)}</h3>'
+            f"<p><strong>Computed fact:</strong> {escape(observation.computed_claim)}</p>"
+            f"<p><strong>Candidate interpretation:</strong> {escape(observation.interpretation)}</p>"
             + _table(
                 evidence,
                 [
@@ -137,7 +90,7 @@ def render_report(
                 ],
             )
             + "</article>"
-            for text, evidence in observations
+            for observation, evidence in observations
         )
         or '<p class="empty">No observations could be generated from qualifying events.</p>'
     )

@@ -1,9 +1,10 @@
 
 # Opposition Brief
 
-Opposition Brief turns a small set of public soccer event files into a concise,
-evidence-linked opponent report. Milestone 1 intentionally covers a narrow,
-auditable workflow rather than a predictive model.
+Opposition Brief turns a small set of public soccer event files into an
+evidence-linked opponent report and analyst decision board. Milestone 2 keeps
+the workflow deliberately descriptive: the application proposes patterns and
+the analyst decides what enters the final brief.
 
 ## Build a report
 
@@ -29,6 +30,37 @@ opposition-brief list-competitions
 opposition-brief build-demo-report --input-dir tests/fixtures/demo --team "Meridian FC"
 ```
 
+## Analyst decision board (Milestone 2)
+
+After building once, start the app from the repository root. It reads cached
+StatsBomb files only, so opening the demo does not need internet access.
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+The four sections are:
+
+- **Project Overview**: opponent, coverage, counts, warnings, and limitations.
+- **Decision Board**: two or three structured candidate cards. The calculated
+  claim is immutable; the analyst can change status, title, interpretation, and
+  note in session state.
+- **Evidence Explorer**: filtered supporting and comparison events, source
+  timestamps, and a normalized pitch view of selected rows.
+- **Report Review**: previews and downloads a print-friendly standalone HTML
+  brief containing only **Accepted** and **Needs revision** observations.
+
+Review state is intentionally not stored in a database. Download the JSON
+review-state export if it should be retained between browser sessions.
+
+Candidate observations use deterministic evidence labels. **Low** covers fewer
+than six supporting events or fewer than two matches; **Moderate** requires at
+least six events across two matches; **Strong** requires at least 12 events
+across every selected match. These labels describe data coverage, not tactical
+certainty. Supporting events are the actions counted by the pattern;
+counterexamples are equivalent events outside its leading channel, player, or
+zone and are labelled as comparisons rather than refutations.
+
 ## Definitions
 
 The canonical schema retains match, timing, team/player, possession, action,
@@ -48,6 +80,14 @@ Possession-loss locations include incomplete passes, `Dispossessed`,
 `Miscontrol`, and incomplete dribbles. This is an event-based descriptive
 count, not a complete measurement of pressing vulnerability. Player rankings
 flag fewer than three progressive attempts as a small sample.
+
+## Current limitations
+
+The demo covers three matches, uses event data only, and does not supply video
+links or claim tactical intent, causal pressure mechanisms, or a correct
+tactical response. Evidence timestamps are intended to help an analyst find
+the relevant footage. Candidate strength should guide review priority, not
+replace it.
 
 ## Attribution and use
 
