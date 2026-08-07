@@ -3,7 +3,7 @@
 
 Opposition Brief turns a small set of public soccer event files into a
 coach-first opponent report. It stays deliberately descriptive: the app shows
-what was recorded, how often it appeared, and the sequences to inspect before
+what was recorded, how often it appeared, and the actions to inspect before
 the analyst decides what enters the final brief.
 
 ## Build a report
@@ -43,10 +43,10 @@ The app has three coach-facing stages:
 
 - **Opposition brief** opens directly on the two or three main patterns. Each
   card states the finding, its share of the relevant actions, sample size,
-  match coverage, useful player context, a small chart, and why the sequence
+  match coverage, useful player context, a small chart, and why the action
   deserves review.
-- **Pattern detail** focuses on one pattern with its match-by-match consistency,
-  pitch locations, involved players, and representative timestamped sequences.
+- **Pattern detail** focuses on one pattern with its within-match shares,
+  pitch locations, involved players, and representative timestamped actions.
   “See other examples” is optional context, while definitions and data notes
   sit inside a secondary **Data & methodology** expander.
 - **Final report** contains only patterns the analyst marked **Include in

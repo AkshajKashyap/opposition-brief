@@ -5,6 +5,7 @@ from __future__ import annotations
 import plotly.graph_objects as go
 
 from opposition_brief.models import NormalizedEvent
+from opposition_brief.presentation import soccer_timestamp
 
 
 def evidence_pitch(events: list[NormalizedEvent]) -> go.Figure:
@@ -13,10 +14,29 @@ def evidence_pitch(events: list[NormalizedEvent]) -> go.Figure:
     figure.add_shape(type="rect", x0=0, y0=0, x1=100, y1=100, line={"color": "#ffffff"})
     figure.add_shape(type="line", x0=50, y0=0, x1=50, y1=100, line={"color": "#ffffff"})
     figure.add_shape(type="circle", x0=40, y0=40, x1=60, y1=60, line={"color": "#ffffff"})
+    figure.add_annotation(
+        x=96,
+        y=94,
+        ax=72,
+        ay=94,
+        xref="x",
+        yref="y",
+        axref="x",
+        ayref="y",
+        text="Attacking direction",
+        showarrow=True,
+        arrowhead=3,
+        arrowwidth=2,
+        arrowcolor="#ffffff",
+        font={"color": "#ffffff"},
+    )
     for event in events:
         if event.start_x is None or event.start_y is None:
             continue
-        label = f"{event.match_label} · {event.timestamp or '—'} · {event.player or 'Unknown'}"
+        label = (
+            f"{soccer_timestamp(event.timestamp)} · {event.player or 'Unknown player'} · "
+            f"{event.event_type or 'Action'}"
+        )
         figure.add_trace(
             go.Scatter(
                 x=[event.start_x],
@@ -33,12 +53,26 @@ def evidence_pitch(events: list[NormalizedEvent]) -> go.Figure:
                 go.Scatter(
                     x=[event.start_x, event.end_x],
                     y=[event.start_y, event.end_y],
-                    mode="lines+markers",
+                    mode="lines",
                     line={"color": "#35a7a0", "width": 2},
-                    marker={"color": "#35a7a0", "size": 5},
                     hovertemplate=f"{label}<extra></extra>",
                     showlegend=False,
                 )
+            )
+            figure.add_annotation(
+                x=event.end_x,
+                y=event.end_y,
+                ax=event.start_x,
+                ay=event.start_y,
+                xref="x",
+                yref="y",
+                axref="x",
+                ayref="y",
+                text="",
+                showarrow=True,
+                arrowhead=3,
+                arrowwidth=2,
+                arrowcolor="#35a7a0",
             )
     figure.update_layout(
         height=560,

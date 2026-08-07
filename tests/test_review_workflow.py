@@ -147,10 +147,14 @@ def test_report_filtering_and_reviewed_html_escape_edits() -> None:
         third.observation_id,
     ]
     html = render_reviewed_report(project, included)
-    assert "&lt;Accepted route&gt;" in html
     assert "Review &lt;b&gt;carefully&lt;/b&gt; &amp; compare." in html
     assert "Rejected" not in html
-    assert "Computed evidence (immutable)" in html
+    assert "Patterns for review" in html
+    assert "Representative actions" in html
+    assert "Representative sequences" not in html
+    assert "background: #ffffff !important" in html
+    assert "ID 101" not in html
+    assert "(20.0, 20.0)" not in html
 
 
 def test_empty_data_and_malformed_cached_artifacts_are_safe(tmp_path: Path) -> None:

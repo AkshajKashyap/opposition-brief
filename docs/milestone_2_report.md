@@ -1,5 +1,9 @@
 # Milestone 2: Analyst Decision Board and Evidence Review Workflow
 
+> Superseded for product use by the coach-first experience in
+> [Milestone 2.5](milestone_2_5_report.md). This document records the original
+> technical workflow and terminology for implementation history.
+
 ## Product objective
 
 Help a part-time opposition analyst decide which proposed opponent tendencies

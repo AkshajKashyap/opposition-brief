@@ -5,51 +5,42 @@ from __future__ import annotations
 from html import escape
 from pathlib import Path
 
-from opposition_brief.demo import DemoProject, evidence_events
-from opposition_brief.models import MatchMetadata, NormalizedEvent
-from opposition_brief.presentation import human_match_label, prepare_pattern_view, soccer_timestamp
+from opposition_brief.demo import DemoProject
+from opposition_brief.presentation import EvidenceItem, human_match_label, prepare_pattern_view
 from opposition_brief.review import ReviewedObservation
 
 
-def _table(events: list[NormalizedEvent], matches: dict[int, MatchMetadata]) -> str:
+def _table(events: tuple[EvidenceItem, ...]) -> str:
     if not events:
-        return "<p>No supporting source events are available.</p>"
+        return "<p>No representative actions are available.</p>"
     rows = "".join(
         "<tr>"
-        f"<td>{escape(human_match_label(matches[event.match_id]))}</td>"
-        f"<td>{escape(event.match_date or '—')}</td>"
-        f"<td>{escape(soccer_timestamp(event.timestamp))}</td>"
-        f"<td>{escape(event.player or 'Unknown')}</td><td>{escape(event.event_type or 'Unknown')}</td>"
-        f"<td>{escape(_location(event.start_x, event.start_y))}</td>"
-        f"<td>{escape(_location(event.end_x, event.end_y))}</td>"
-        f"<td>{escape(event.outcome or '—')}</td></tr>"
+        f"<td>{escape(event.match)}</td><td>{escape(event.date)}</td>"
+        f"<td>{escape(event.timestamp)}</td><td>{escape(event.player)}</td>"
+        f"<td>{escape(event.description)}</td></tr>"
         for event in events
     )
     return (
-        "<table><thead><tr><th>Match</th><th>Date</th><th>Time</th><th>Player</th><th>Action</th>"
-        "<th>Start</th><th>End</th><th>Outcome</th></tr></thead><tbody>"
+        "<table><thead><tr><th>Match</th><th>Date</th><th>Time</th><th>Player</th>"
+        "<th>Action</th></tr></thead><tbody>"
         f"{rows}</tbody></table>"
     )
 
 
-def _location(x: float | None, y: float | None) -> str:
-    return f"({x:.1f}, {y:.1f})" if x is not None and y is not None else "—"
-
-
 def render_reviewed_report(project: DemoProject, observations: list[ReviewedObservation]) -> str:
     """Render only analyst-selected findings and escape every editable field."""
-    matches = {match.match_id: match for match in project.matches}
     coverage = "".join(f"<li>{escape(human_match_label(match))}</li>" for match in project.matches)
     sections = (
         "".join(
-            f"<article><h3>{escape(prepare_pattern_view(project, item.observation).title)}</h3>"
-            f'<p class="finding">{escape(prepare_pattern_view(project, item.observation).finding)}</p>'
+            f"<article><h3>{escape(view.title)}</h3>"
+            f'<p class="finding">{escape(view.finding)}</p>'
             f"<p><strong>Analyst interpretation:</strong> {escape(item.review.interpretation)}</p>"
             f"<p><strong>Analyst note:</strong> {escape(item.review.analyst_note or 'None recorded.')}</p>"
             f"<p><strong>Limitation:</strong> {escape(' '.join(item.observation.limitations))}</p>"
-            "<h4>Representative sequences</h4>"
-            f"{_table(evidence_events(project, item.observation.supporting_event_ids)[:8], matches)}</article>"
+            "<h4>Representative actions</h4>"
+            f"{_table(view.evidence)}</article>"
             for item in observations
+            for view in [prepare_pattern_view(project, item.observation)]
         )
         or "<p>No observations are currently Accepted or marked Needs revision.</p>"
     )

@@ -56,25 +56,25 @@ def _go_to_brief() -> None:
     st.session_state["stage"] = "Opposition brief"
 
 
-def _bar_chart(values: tuple[ChartValue, ...], title: str) -> None:
+def _bar_chart(values: tuple[ChartValue, ...], title: str, axis_label: str) -> None:
     st.caption(title)
     st.bar_chart(
         [{"Area": item.label, "Share": item.value} for item in values],
         x="Area",
         y="Share",
         horizontal=True,
-        x_label="Share of actions (%)",
+        x_label=axis_label,
         y_label=None,
     )
 
 
-def _coverage_chart(values: tuple[ChartValue, ...]) -> None:
+def _match_share_chart(values: tuple[ChartValue, ...]) -> None:
     st.bar_chart(
-        [{"Match": item.label, "Sequences": item.value} for item in values],
+        [{"Match": item.label, "Share": item.value} for item in values],
         x="Match",
-        y="Sequences",
+        y="Share",
         x_label=None,
-        y_label="Representative sequences",
+        y_label="Share of relevant actions (%)",
     )
 
 
@@ -96,10 +96,8 @@ def _landing_page(project: DemoProject, patterns: list[PatternView]) -> None:
             st.write(pattern.finding)
             st.caption(f"{pattern.sample_label} · {pattern.matches_label}")
             if pattern.players:
-                st.caption(
-                    f"Key player{'s' if len(pattern.players) > 1 else ''}: {', '.join(pattern.players)}"
-                )
-            _bar_chart(pattern.chart_values, pattern.chart_title)
+                st.caption(f"{pattern.players_label}: {', '.join(pattern.players)}")
+            _bar_chart(pattern.chart_values, pattern.chart_title, pattern.chart_axis_label)
             st.markdown("**Why review this?**")
             st.write(pattern.why_review)
             st.button(
@@ -120,7 +118,7 @@ def _evidence_cards(items: tuple[EvidenceItem, ...], empty_message: str) -> None
         with st.container(border=True):
             st.markdown(f"**{item.match}**")
             st.caption(f"{item.date} · {item.timestamp} · {item.player}")
-            st.write(f"{item.action} · {item.start} → {item.end} · {item.outcome}")
+            st.write(item.description)
 
 
 def _save_decision(pattern: PatternView, reviews: dict[str, ReviewState]) -> None:
@@ -145,7 +143,7 @@ def _decision_controls(pattern: PatternView, reviews: dict[str, ReviewState]) ->
     state = reviews[observation.observation_id]
     prefix = f"review-{observation.observation_id}"
     st.header("Analyst decision")
-    st.caption("Choose what should appear in the final report after reviewing the sequences.")
+    st.caption("Choose what should appear in the final report after reviewing the actions.")
     decision_key = f"{prefix}-decision"
     st.session_state.setdefault(decision_key, DECISION_LABELS[state.status])
     decision = st.selectbox("Decision", list(DECISIONS), key=decision_key)
@@ -178,32 +176,32 @@ def _pattern_detail(
     st.header("What we saw")
     st.write(pattern.finding)
     st.caption(f"{pattern.sample_label} · {pattern.matches_label}")
-    st.header("Consistency across matches")
-    _coverage_chart(pattern.consistency)
+    st.header("Pattern share in each match")
+    st.caption("Each bar uses that match's relevant actions as its denominator.")
+    _match_share_chart(pattern.match_shares)
     st.header("Where it happened")
     supporting_events = evidence_events(project, pattern.observation.supporting_event_ids)
     if supporting_events:
         st.plotly_chart(evidence_pitch(supporting_events[:8]), width="stretch")
     else:
-        st.caption("No locations are available for the representative sequences.")
+        st.caption("No locations are available for the representative actions.")
     if pattern.players:
         st.header("Who was involved")
-        st.write(
-            f"{', '.join(pattern.players)} featured most often in the representative sequences."
-        )
-    st.header("Representative sequences")
-    _evidence_cards(pattern.evidence, "No representative sequences are available.")
+        st.caption(pattern.players_label)
+        st.write(", ".join(pattern.players))
+    st.header("Representative actions")
+    _evidence_cards(pattern.evidence, "No representative actions are available.")
     with st.expander("See other examples", icon=":material/compare_arrows:"):
         st.write(
-            "These sequences show occasions where the opponent used a different route. "
+            "These actions show occasions where the opponent used a different route. "
             "They help judge how consistent the pattern really is."
         )
-        _evidence_cards(pattern.other_examples, "No other examples were selected for this pattern.")
+        _evidence_cards(pattern.other_examples, "No other actions were selected for this pattern.")
     with st.expander("Data & methodology", icon=":material/info:"):
         st.write(
             "This brief uses three matches of event data. It describes recorded actions, not tactical "
             "intent, the cause of a turnover, or the correct response. Pitch locations are normalized "
-            "to a 0–100 scale; timestamps are included to find sequences in video."
+            "to a 0–100 scale; timestamps are included to find actions in video."
         )
         if project.warnings:
             st.caption(

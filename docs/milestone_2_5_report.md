@@ -20,8 +20,8 @@ report**.
   players when relevant, a small share chart, a review rationale, and one
   direct **Review sequences** action.
 - Pattern detail concentrates on one finding. It shows what was seen,
-  match-by-match consistency, a large pitch map, relevant players, and
-  readable timestamped representative sequences. The analyst decision is last.
+  within-match shares, a large pitch map, relevant players, and
+  readable timestamped representative actions. The analyst decision is last.
 - Final report lists only patterns marked **Include in brief** or **Needs
   context**, then downloads a controlled-light, high-contrast standalone HTML
   report suitable for printing.
@@ -32,7 +32,7 @@ The primary screens no longer display evidence IDs, observation IDs, raw match
 IDs, UUIDs, normalized-event counts, possession counts, review-state JSON,
 “computed evidence (immutable)”, “candidate observation”, or “counterexample
 evidence”. The product instead uses “patterns”, “what we saw”, “representative
-sequences”, and “See other examples”. Method details, retained data-quality
+actions”, and “See other examples”. Method details, retained data-quality
 notes, and limitations are secondary in **Data & methodology**.
 
 ## Screen descriptions
