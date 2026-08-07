@@ -78,7 +78,7 @@ def normalize_events(raw_events: Iterable[RawEvent], match: MatchMetadata) -> No
     """
     events: list[NormalizedEvent] = []
     warnings: list[ValidationWarning] = []
-    for raw in raw_events:
+    for event_index, raw in enumerate(raw_events):
         event_id = raw.get("id") if isinstance(raw.get("id"), str) else None
         event_type = _name(raw.get("type"))
         team = _name(raw.get("team"))
@@ -138,6 +138,7 @@ def normalize_events(raw_events: Iterable[RawEvent], match: MatchMetadata) -> No
                 end_x=end_x,
                 end_y=end_y,
                 source_event_id=event_id,
+                event_index=event_index,
             )
         )
     return NormalizationResult(events, warnings)

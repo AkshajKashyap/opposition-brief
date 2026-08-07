@@ -1,15 +1,15 @@
 
 # Opposition Brief
 
-Opposition Brief turns a small set of public soccer event files into a
-coach-first opponent report. It stays deliberately descriptive: the app shows
-what was recorded, how often it appeared, and the actions to inspect before
-the analyst decides what enters the final brief.
+Opposition Brief turns public soccer event files into a coach-first opponent
+report. Milestone 3 prioritizes recurring behaviors that were associated with
+downstream possession outcomes, so scarce video time goes beyond the most
+obvious frequency leaders.
 
 ## Build a report
 
 With internet access, the default command retrieves only the StatsBomb Open
-Data competition match list plus the three selected Argentina 2022 World Cup
+Data competition match list plus the five selected Argentina 2022 World Cup
 matches and their event and lineup files. It caches those files under
 `data/raw/statsbomb/`; it never clones or commits the upstream dataset.
 
@@ -41,12 +41,11 @@ streamlit run app/streamlit_app.py
 
 The app has three coach-facing stages:
 
-- **Opposition brief** opens directly on the two or three main patterns. Each
-  card states the finding, its share of the relevant actions, sample size,
-  match coverage, useful player context, a small chart, and why the action
-  deserves review.
-- **Pattern detail** focuses on one pattern with its within-match shares,
-  pitch locations, involved players, and representative timestamped actions.
+- **Opposition brief** opens on up to five patterns worth video time. Each card
+  states the non-causal finding, comparison, downstream outcome, sample size,
+  match coverage, review tier, and why it may deserve review.
+- **Pattern detail** focuses on one pattern with its comparison, within-match
+  outcome rates, pitch locations, and representative timestamped possessions.
   “See other examples” is optional context, while definitions and data notes
   sit inside a secondary **Data & methodology** expander.
 - **Final report** contains only patterns the analyst marked **Include in
@@ -76,17 +75,34 @@ Possession-loss locations include incomplete passes, `Dispossessed`,
 count, not a complete measurement of pressing vulnerability. Player rankings
 flag fewer than three progressive attempts as a small sample.
 
+### Possession outcome definitions
+
+A possession reaches the **final third** when a later event has a start or end
+location at `x >= 66.7`; it **enters the box** when a later location is at
+`x >= 85` and `y = 22.5–77.5`; and it **produces a shot** when a later event
+has type `Shot`. Route outcomes use the first completed progressive action in
+that route within a possession, then inspect only later events in that same
+possession. A qualifying player-association possession contains a completed
+progressive action starting outside the final third; the comparison group is
+other qualifying possessions. Buildup paths use the start/end 3×3 zones of
+progressive actions, collapse consecutive repeats, and retain 2–5-zone paths.
+
+Review priority is deterministic: **High** requires at least 12 possessions,
+three matches, a 15-point-or-more box-entry difference, and a 20%-or-more
+box-entry rate; **Moderate** requires six possessions, two matches, a 10-point
+difference, and a 10% rate. All other results are low/insufficient evidence.
+These are associations only, not causal claims.
+
 ## Current limitations
 
-The demo covers three matches, uses event data only, and does not supply video
+The demo covers five matches, uses event data only, and does not supply video
 links or claim tactical intent, causal pressure mechanisms, or a correct
 tactical response. Evidence timestamps are intended to help an analyst find
 the relevant footage. Candidate strength should guide review priority, not
 replace it.
 
-See [the Milestone 2.5 redesign report](docs/milestone_2_5_report.md) for the
-information architecture, screen descriptions, testing, and remaining product
-risks.
+See [the Milestone 3 report](docs/milestone_3_report.md) for the analytical
+definitions, priority rules, findings, and remaining product risks.
 
 ## Attribution and use
 

@@ -6,12 +6,25 @@ from pathlib import Path
 
 import streamlit as st
 
-from opposition_brief.demo import DemoProject, evidence_events, load_cached_demo_project
+from opposition_brief.analysis.possession import (
+    enters_box,
+    produces_shot,
+    reaches_final_third,
+    zone_label,
+)
+from opposition_brief.demo import (
+    DemoProject,
+    evidence_events,
+    load_cached_demo_project,
+    possession_events,
+)
 from opposition_brief.presentation import (
     ChartValue,
     EvidenceItem,
     PatternView,
+    human_match_label,
     prepare_pattern_views,
+    soccer_timestamp,
 )
 from opposition_brief.reporting.reviewed_html import render_reviewed_report
 from opposition_brief.review import (
@@ -74,7 +87,7 @@ def _match_share_chart(values: tuple[ChartValue, ...]) -> None:
         x="Match",
         y="Share",
         x_label=None,
-        y_label="Share of relevant actions (%)",
+        y_label="Box-entry rate (%)",
     )
 
 
@@ -85,14 +98,21 @@ def _landing_page(project: DemoProject, patterns: list[PatternView]) -> None:
     st.caption(f"{project.competition} {project.season} · {len(project.matches)} matches analyzed")
     if dates:
         st.caption(f"{dates[0]} to {dates[-1]}")
-    st.header(f"{len(patterns)} patterns worth reviewing")
-    st.write("A quick read on what this opponent repeatedly did in the matches available.")
+    st.header("Patterns worth your video time")
+    st.write(
+        "Recurring behaviors with a transparent downstream-outcome comparison in the matches available."
+    )
     if not patterns:
         st.info("No patterns are available from the cached matches.")
         return
     for pattern in patterns:
         with st.container(border=True):
             st.subheader(pattern.title)
+            if pattern.priority:
+                st.badge(
+                    pattern.priority,
+                    color="red" if pattern.priority.startswith("High") else "orange",
+                )
             st.write(pattern.finding)
             st.caption(f"{pattern.sample_label} · {pattern.matches_label}")
             if pattern.players:
@@ -119,6 +139,40 @@ def _evidence_cards(items: tuple[EvidenceItem, ...], empty_message: str) -> None
             st.markdown(f"**{item.match}**")
             st.caption(f"{item.date} · {item.timestamp} · {item.player}")
             st.write(item.description)
+
+
+def _possession_cards(project: DemoProject, keys: tuple[tuple[int, int], ...]) -> None:
+    matches = {match.match_id: match for match in project.matches}
+    selected = possession_events(project, keys)[:6]
+    if not selected:
+        st.caption("No representative possessions are available.")
+        return
+    for events in selected:
+        first = events[0]
+        outcomes = []
+        if reaches_final_third(tuple(events)):
+            outcomes.append("final third")
+        if enters_box(tuple(events)):
+            outcomes.append("box")
+        if produces_shot(tuple(events)):
+            outcomes.append("shot")
+        if not outcomes:
+            outcomes.append("no recorded attacking outcome")
+        actions = " → ".join(
+            f"{event.player or 'Unknown player'} {str(event.event_type or 'action').lower()}"
+            for event in events[:6]
+        )
+        with st.container(border=True):
+            match = matches.get(first.match_id)
+            st.markdown(
+                f"**{human_match_label(match) if match else 'Match unavailable'} · "
+                f"{soccer_timestamp(first.timestamp)}**"
+            )
+            st.caption(
+                f"Started in {zone_label(first.start_x, first.start_y) or 'an unknown zone'}"
+            )
+            st.write(actions)
+            st.caption("Outcome: " + ", ".join(outcomes))
 
 
 def _save_decision(pattern: PatternView, reviews: dict[str, ReviewState]) -> None:
@@ -176,9 +230,16 @@ def _pattern_detail(
     st.header("What we saw")
     st.write(pattern.finding)
     st.caption(f"{pattern.sample_label} · {pattern.matches_label}")
-    st.header("Pattern share in each match")
-    st.caption("Each bar uses that match's relevant actions as its denominator.")
-    _match_share_chart(pattern.match_shares)
+    st.header("Why it may matter")
+    st.write(pattern.why_review)
+    st.header("Comparison")
+    _bar_chart(pattern.chart_values, pattern.chart_title, pattern.chart_axis_label)
+    st.header("Consistency across matches")
+    if pattern.match_shares:
+        st.caption("Each bar is the box-entry rate within that match's qualifying possessions.")
+        _match_share_chart(pattern.match_shares)
+    else:
+        st.caption("The available qualifying possessions did not provide a match-by-match rate.")
     st.header("Where it happened")
     supporting_events = evidence_events(project, pattern.observation.supporting_event_ids)
     if supporting_events:
@@ -189,8 +250,12 @@ def _pattern_detail(
         st.header("Who was involved")
         st.caption(pattern.players_label)
         st.write(", ".join(pattern.players))
-    st.header("Representative actions")
-    _evidence_cards(pattern.evidence, "No representative actions are available.")
+    if pattern.observation.supporting_possession_keys:
+        st.header("Representative possessions")
+        _possession_cards(project, pattern.observation.supporting_possession_keys)
+    else:
+        st.header("Representative actions")
+        _evidence_cards(pattern.evidence, "No representative actions are available.")
     with st.expander("See other examples", icon=":material/compare_arrows:"):
         st.write(
             "These actions show occasions where the opponent used a different route. "
@@ -199,9 +264,9 @@ def _pattern_detail(
         _evidence_cards(pattern.other_examples, "No other actions were selected for this pattern.")
     with st.expander("Data & methodology", icon=":material/info:"):
         st.write(
-            "This brief uses three matches of event data. It describes recorded actions, not tactical "
-            "intent, the cause of a turnover, or the correct response. Pitch locations are normalized "
-            "to a 0–100 scale; timestamps are included to find actions in video."
+            "This brief uses five matches of event data. A downstream outcome is counted only when a later "
+            "event in the same possession reaches the final third, enters the box, or produces a shot. "
+            "These comparisons describe associations, not tactical intent, causality, or the correct response."
         )
         if project.warnings:
             st.caption(

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import hypot
 
 from opposition_brief.models import NormalizedEvent
@@ -22,6 +22,7 @@ class AnalysisResult:
     progressive_attempts: list[NormalizedEvent]
     losses: list[NormalizedEvent]
     match_ids: list[int]
+    possession_analysis: object | None = field(default=None)
 
 
 def channel_for_y(y: float | None) -> str | None:
@@ -159,6 +160,8 @@ def build_analysis(events: list[NormalizedEvent], team: str) -> AnalysisResult:
         ],
         ["zone", "match_id"],
     )
+    from opposition_brief.analysis.possession import build_possession_analysis
+
     return AnalysisResult(
         routes,
         players,
@@ -167,6 +170,7 @@ def build_analysis(events: list[NormalizedEvent], team: str) -> AnalysisResult:
         attempts,
         losses,
         sorted({e.match_id for e in team_events}),
+        build_possession_analysis(events, team),
     )
 
 

@@ -12,6 +12,7 @@ OPEN_DATA_BASE_URL = "https://raw.githubusercontent.com/statsbomb/open-data/mast
 DEFAULT_COMPETITION_ID = 43  # FIFA World Cup
 DEFAULT_SEASON_ID = 106  # 2022
 DEFAULT_TEAM = "Argentina"
+DEMO_MATCH_COUNT = 5
 
 
 def _read_json(path: Path) -> object:
@@ -82,7 +83,7 @@ def load_local_bundle(
         )
     selected = sorted(
         selected, key=lambda match: (match.match_date or "", match.match_id), reverse=True
-    )[:3]
+    )[:DEMO_MATCH_COUNT]
     events = {
         match.match_id: _read_events(input_dir / "events" / f"{match.match_id}.json")
         for match in selected
@@ -121,7 +122,7 @@ def prepare_demo_bundle(
         )
     selected = sorted(
         selected, key=lambda match: (match.match_date or "", match.match_id), reverse=True
-    )[:3]
+    )[:DEMO_MATCH_COUNT]
     payloads: dict[int, list[RawEvent]] = {}
     for match in selected:
         events_path = cache_root / "events" / f"{match.match_id}.json"

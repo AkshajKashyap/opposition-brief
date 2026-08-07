@@ -54,6 +54,7 @@ class NormalizedEvent:
     end_x: float | None
     end_y: float | None
     source_event_id: str | None = None
+    event_index: int = 0
 
     @property
     def match_label(self) -> str:

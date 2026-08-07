@@ -51,6 +51,7 @@ class PatternView:
     match_shares: tuple[ChartValue, ...]
     evidence: tuple[EvidenceItem, ...]
     other_examples: tuple[EvidenceItem, ...]
+    priority: str = ""
 
 
 def percentage(numerator: int, denominator: int) -> int:
@@ -90,7 +91,42 @@ def prepare_pattern_view(project: DemoProject, observation: CandidateObservation
         return _route_view(project, observation, support, alternatives, match_lookup)
     if observation.category == "Player involvement":
         return _player_view(project, observation, support, alternatives, match_lookup)
+    if observation.comparison_values:
+        return _prioritized_view(project, observation, support, alternatives, match_lookup)
     return _loss_view(project, observation, support, alternatives, match_lookup)
+
+
+def _prioritized_view(
+    project: DemoProject,
+    observation: CandidateObservation,
+    support: list[NormalizedEvent],
+    alternatives: list[NormalizedEvent],
+    matches: dict[int, MatchMetadata],
+) -> PatternView:
+    match_rates = tuple(
+        ChartValue(human_match_label(matches[match_id]), rate)
+        for match_id, rate in observation.match_rates
+        if match_id in matches
+    )
+    return PatternView(
+        observation=observation,
+        title=observation.title,
+        finding=observation.computed_claim,
+        sample_label=f"{observation.sample_size} qualifying possessions",
+        matches_label=_coverage_label(support, project.matches),
+        players=(),
+        players_label="",
+        why_review=observation.interpretation,
+        chart_title=observation.comparison_label,
+        chart_axis_label="Box-entry rate (%)",
+        chart_values=tuple(
+            ChartValue(label, value) for label, value in observation.comparison_values
+        ),
+        match_shares=match_rates,
+        evidence=tuple(_evidence_item(event, matches) for event in support[:8]),
+        other_examples=tuple(_evidence_item(event, matches) for event in alternatives[:8]),
+        priority=observation.priority.value,
+    )
 
 
 def _route_view(

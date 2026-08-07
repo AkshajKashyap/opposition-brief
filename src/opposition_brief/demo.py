@@ -98,3 +98,22 @@ def evidence_events(project: DemoProject, event_ids: tuple[str, ...]) -> list[No
             event.source_event_id or "",
         ),
     )
+
+
+def possession_events(
+    project: DemoProject, possession_keys: tuple[tuple[int, int], ...]
+) -> list[list[NormalizedEvent]]:
+    """Return ordered event lists for selected possessions without exposing IDs to the UI."""
+    wanted = set(possession_keys)
+    grouped: dict[tuple[int, int], list[NormalizedEvent]] = {}
+    for event in project.events:
+        if event.possession_id is None or (event.match_id, event.possession_id) not in wanted:
+            continue
+        grouped.setdefault((event.match_id, event.possession_id), []).append(event)
+    return [
+        sorted(events, key=lambda event: event.event_index)
+        for _, events in sorted(
+            grouped.items(),
+            key=lambda item: (item[1][0].match_date or "", item[1][0].event_index),
+        )
+    ]
